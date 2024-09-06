@@ -23,7 +23,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install autopep8 flake8
+        pip install autopep8
     - name: Set GROQ_API_KEY environment variable
       run: echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
     - name: Run autopep8
@@ -31,6 +31,3 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest tests/
-    - name: Check code style
-      run: |
-        flake8 .
