@@ -289,7 +289,8 @@ def display_and_select_solution(solutions):
 def execute_command(command):
     print(f"\nExecuting: {command}")
     try:
-        # Use bash to execute the command, which allows for proper expansion of {1..10}
+        # Use bash to execute the command, which allows for proper expansion of
+        # {1..10}
         result = subprocess.run(
             ["bash", "-c", command], check=True, text=True, capture_output=True
         )
@@ -314,7 +315,8 @@ def execute_command(command):
             print(f"{idx}. {solution['description']}")
 
         # Allow the user to select and execute a solution using arrow keys
-        selected_solution = display_and_select_solution(error_data["solutions"])
+        selected_solution = display_and_select_solution(
+            error_data["solutions"])
         if selected_solution:
             execute_command(selected_solution["command"])
         else:
@@ -339,7 +341,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="CLI tool for generating commands using Groq."
     )
-    parser.add_argument("query", nargs="+", help="The operation you want to perform")
+    parser.add_argument(
+        "query",
+        nargs="+",
+        help="The operation you want to perform")
     args = parser.parse_args()
 
     query = " ".join(args.query)

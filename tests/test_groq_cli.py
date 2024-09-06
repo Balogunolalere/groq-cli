@@ -1,13 +1,10 @@
 import pytest
 import json
-import subprocess
 from unittest.mock import patch, MagicMock
 from groq_cli import (
     get_commands,
     handle_error,
     execute_command,
-    display_and_select_command,
-    display_and_select_solution,
 )
 
 
@@ -25,14 +22,7 @@ def test_get_commands(mock_create):
                                     "command": "ls -la",
                                     "description": "List all files in the current directory",
                                     "installation": "",
-                                }
-                            ]
-                        }
-                    )
-                )
-            )
-        ]
-    )
+                                }]})))])
 
     query = "list all files"
     result = get_commands(query)
@@ -58,14 +48,8 @@ def test_handle_error(mock_create):
                                 {
                                     "description": "Install coreutils package",
                                     "command": "sudo apt-get install coreutils",
-                                }
-                            ],
-                        }
-                    )
-                )
-            )
-        ]
-    )
+                                }],
+                        })))])
 
     error_message = "ls: command not found"
     result = handle_error(error_message)
@@ -80,7 +64,8 @@ def test_handle_error(mock_create):
 
 @patch("subprocess.run")
 def test_execute_command(mock_run):
-    mock_run.return_value = MagicMock(stdout="Output of the command", returncode=0)
+    mock_run.return_value = MagicMock(
+        stdout="Output of the command", returncode=0)
 
     command = "ls -la"
     success = execute_command(command)
