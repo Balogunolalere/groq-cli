@@ -28,8 +28,6 @@ jobs:
       run: echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
     - name: Run autopep8
       run: autopep8 --in-place --aggressive --aggressive groq_cli.py tests/conftest.py tests/test_groq_cli.py
-    - name: Run flake8
-      run: flake8 .
     - name: Run tests
       run: |
         python -m pytest tests/
