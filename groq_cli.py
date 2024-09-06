@@ -13,11 +13,12 @@ import re
 load_dotenv()
 
 # Load API key from environment variable for better security
-API_KEY = os.getenv('GROQ_API_KEY')
+API_KEY = os.getenv("GROQ_API_KEY")
 if not API_KEY:
     raise ValueError("GROQ_API_KEY environment variable not set")
 
 client = Groq(api_key=API_KEY)
+
 
 def get_commands(query):
     completion = client.chat.completions.create(
@@ -88,18 +89,15 @@ def get_commands(query):
                         }
                     ]
                 }
-                """
+                """,
             },
-            {
-                "role": "user",
-                "content": query
-            }
+            {"role": "user", "content": query},
         ],
         temperature=0.2,
         max_tokens=1000,
         top_p=1,
         stream=False,
-        stop=None
+        stop=None,
     )
 
     try:
@@ -110,10 +108,10 @@ def get_commands(query):
         content = completion.choices[0].message.content.strip()
 
         # Replace unescaped backslashes with escaped ones
-        content = re.sub(r'(?<!\\)\\(?![\\"{}])', r'\\\\', content)
+        content = re.sub(r'(?<!\\)\\(?![\\"{}])', r"\\\\", content)
 
         # Remove any text outside of the JSON object
-        content = re.search(r'\{.*\}', content, re.DOTALL)
+        content = re.search(r"\{.*\}", content, re.DOTALL)
         if content:
             content = content.group(0)
         else:
@@ -129,14 +127,19 @@ def get_commands(query):
             raise ValueError("Failed to parse the response as JSON")
 
     # Validate the structure of the parsed data
-    if not isinstance(data, dict) or 'commands' not in data or not isinstance(data['commands'], list):
+    if (
+        not isinstance(data, dict)
+        or "commands" not in data
+        or not isinstance(data["commands"], list)
+    ):
         raise ValueError("Invalid response structure")
 
-    for cmd in data['commands']:
-        if not isinstance(cmd, dict) or 'command' not in cmd:
+    for cmd in data["commands"]:
+        if not isinstance(cmd, dict) or "command" not in cmd:
             raise ValueError("Invalid command structure in response")
 
     return data
+
 
 def handle_error(error_message):
     completion = client.chat.completions.create(
@@ -192,18 +195,15 @@ def handle_error(error_message):
                         }
                     ]
                 }
-                """
+                """,
             },
-            {
-                "role": "user",
-                "content": f"Error message: {error_message}"
-            }
+            {"role": "user", "content": f"Error message: {error_message}"},
         ],
         temperature=0.2,
         max_tokens=1000,
         top_p=1,
         stream=False,
-        stop=None
+        stop=None,
     )
 
     try:
@@ -211,10 +211,15 @@ def handle_error(error_message):
     except json.JSONDecodeError:
         raise ValueError("Failed to parse the error handling response as JSON")
 
-    if not isinstance(data, dict) or 'explanation' not in data or 'solutions' not in data:
+    if (
+        not isinstance(data, dict)
+        or "explanation" not in data
+        or "solutions" not in data
+    ):
         raise ValueError("Invalid error handling response structure")
 
     return data
+
 
 def get_key():
     fd = sys.stdin.fileno()
@@ -225,6 +230,7 @@ def get_key():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
     return ch
+
 
 def display_and_select_command(commands):
     selected = 0
@@ -239,18 +245,19 @@ def display_and_select_command(commands):
                 print(f"  {cmd['command']}")
 
         key = get_key()
-        if key == '\x1b':
+        if key == "\x1b":
             key = get_key()
-            if key == '[':
+            if key == "[":
                 key = get_key()
-                if key == 'A':  # Up arrow
+                if key == "A":  # Up arrow
                     selected = (selected - 1) % len(commands)
-                elif key == 'B':  # Down arrow
+                elif key == "B":  # Down arrow
                     selected = (selected + 1) % len(commands)
-        elif key == 'c':  # Cancel
+        elif key == "c":  # Cancel
             return None
-        elif key == '\r':  # Enter key
+        elif key == "\r":  # Enter key
             return commands[selected]
+
 
 def display_and_select_solution(solutions):
     selected = 0
@@ -265,24 +272,27 @@ def display_and_select_solution(solutions):
                 print(f"  {solution['command']}")
 
         key = get_key()
-        if key == '\x1b':
+        if key == "\x1b":
             key = get_key()
-            if key == '[':
+            if key == "[":
                 key = get_key()
-                if key == 'A':  # Up arrow
+                if key == "A":  # Up arrow
                     selected = (selected - 1) % len(solutions)
-                elif key == 'B':  # Down arrow
+                elif key == "B":  # Down arrow
                     selected = (selected + 1) % len(solutions)
-        elif key == 'c':  # Cancel
+        elif key == "c":  # Cancel
             return None
-        elif key == '\r':  # Enter key
+        elif key == "\r":  # Enter key
             return solutions[selected]
+
 
 def execute_command(command):
     print(f"\nExecuting: {command}")
     try:
         # Use bash to execute the command, which allows for proper expansion of {1..10}
-        result = subprocess.run(['bash', '-c', command], check=True, text=True, capture_output=True)
+        result = subprocess.run(
+            ["bash", "-c", command], check=True, text=True, capture_output=True
+        )
         print(result.stdout)
         return True
     except subprocess.CalledProcessError as e:
@@ -298,30 +308,37 @@ def execute_command(command):
         # Handle the error
         error_data = handle_error(str(e))
         print("\nError Analysis:")
-        print(error_data['explanation'])
+        print(error_data["explanation"])
         print("\nSuggested Solutions:")
-        for idx, solution in enumerate(error_data['solutions'], 1):
+        for idx, solution in enumerate(error_data["solutions"], 1):
             print(f"{idx}. {solution['description']}")
 
         # Allow the user to select and execute a solution using arrow keys
-        selected_solution = display_and_select_solution(error_data['solutions'])
+        selected_solution = display_and_select_solution(error_data["solutions"])
         if selected_solution:
-            execute_command(selected_solution['command'])
+            execute_command(selected_solution["command"])
         else:
             print("No solution selected. Command execution cancelled.")
     except FileNotFoundError:
-        print(f"Error: Command '{command.split()[0]}' not found. Please check if it's installed and in your PATH.")
+        print(
+            f"Error: Command '{command.split()[0]}' not found. Please check if it's installed and in your PATH."
+        )
         print("Command execution cancelled.")
     except PermissionError:
-        print(f"Error: Permission denied when trying to execute '{command.split()[0]}'.")
+        print(
+            f"Error: Permission denied when trying to execute '{command.split()[0]}'."
+        )
         print("Command execution cancelled.")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         print("Command execution cancelled.")
     return False
 
+
 def main():
-    parser = argparse.ArgumentParser(description="CLI tool for generating commands using Groq.")
+    parser = argparse.ArgumentParser(
+        description="CLI tool for generating commands using Groq."
+    )
     parser.add_argument("query", nargs="+", help="The operation you want to perform")
     args = parser.parse_args()
 
@@ -332,15 +349,18 @@ def main():
         print("Failed to get valid commands. Please try again.")
         return
 
-    selected_command = display_and_select_command(result['commands'])
+    selected_command = display_and_select_command(result["commands"])
 
     if selected_command:
-        success = execute_command(selected_command['command'])
-        if not success and 'installation' in selected_command:
-            print(f"\nNote: If the command is not found, you may need to install it using:")
-            print(selected_command['installation'])
+        success = execute_command(selected_command["command"])
+        if not success and "installation" in selected_command:
+            print(
+                f"\nNote: If the command is not found, you may need to install it using:"
+            )
+            print(selected_command["installation"])
     else:
         print("No command selected.")
+
 
 if __name__ == "__main__":
     main()
