@@ -27,7 +27,7 @@ jobs:
     - name: Set GROQ_API_KEY environment variable
       run: echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> $GITHUB_ENV
     - name: Run black
-      run: black groq_cli.py conftest.py test_groq_cli.py
+      run: black groq_cli.py tests/conftest.py tests/test_groq_cli.py
     - name: Run flake8
       run: flake8 .
     - name: Run tests
